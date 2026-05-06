@@ -1,8 +1,8 @@
 function Home() {
   return (
-    <div>
-      <h1 className="text-4xl font-bold text-amber-900 mb-4">Accueil</h1>
-      <p className="text-lg text-stone-700">Bienvenue à L'Atelier Toki.</p>
+    <div className="max-w-6xl mx-auto px-6 py-20">
+      <h1 className="text-5xl text-ink mb-6">Accueil</h1>
+      <p className="text-lg text-ink-soft">Bienvenue à L'Atelier Toki.</p>
     </div>
   );
 }
