@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom";
 
 function Header() {
-  // Les liens de navigation, dans un tableau pour éviter la répétition
   const navLinks = [
     { to: "/", label: "Accueil" },
     { to: "/atelier", label: "L'Atelier" },
@@ -11,26 +10,33 @@ function Header() {
   ];
 
   return (
-    <header className="bg-amber-900 text-amber-50 shadow-md">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className="bg-paper border-b border-ink/10">
+      <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         {/* Logo / Nom du magasin */}
-        <NavLink to="/" className="text-2xl font-bold tracking-wide">
-          L'Atelier Toki 🏺
+        <NavLink to="/" className="flex items-baseline gap-2 group">
+          <span className="font-jp text-2xl text-ink group-hover:text-clay transition-colors">
+            時
+          </span>
+          <span className="font-serif text-xl tracking-wider text-ink">
+            L'Atelier Toki
+          </span>
         </NavLink>
 
         {/* Navigation */}
         <nav>
-          <ul className="flex gap-6">
+          <ul className="flex gap-8">
             {navLinks.map((link) => (
               <li key={link.to}>
                 <NavLink
                   to={link.to}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "text-amber-200 font-semibold border-b-2 border-amber-200 pb-1"
-                      : "hover:text-amber-200 transition-colors"
-                  }
                   end={link.to === "/"}
+                  className={({ isActive }) =>
+                    `text-sm uppercase tracking-widest transition-colors ${
+                      isActive
+                        ? "text-ink font-medium"
+                        : "text-ink-soft hover:text-ink"
+                    }`
+                  }
                 >
                   {link.label}
                 </NavLink>

@@ -1,8 +1,8 @@
 function Contact() {
   return (
-    <div>
-      <h1 className="text-4xl font-bold text-amber-900 mb-4">Contact</h1>
-      <p className="text-lg text-stone-700">Une question ? Écrivez-nous.</p>
+    <div className="max-w-6xl mx-auto px-6 py-20">
+      <h1 className="text-5xl text-ink mb-6">Contact</h1>
+      <p className="text-lg text-ink-soft">Une question ? Écrivez-nous.</p>
     </div>
   );
 }
