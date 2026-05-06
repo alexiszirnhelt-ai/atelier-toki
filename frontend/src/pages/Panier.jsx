@@ -155,14 +155,12 @@ function Panier() {
               </div>
             </dl>
 
-            <button
-              onClick={() =>
-                alert("Le checkout sera implémenté dans une prochaine étape !")
-              }
-              className="w-full px-6 py-3 bg-ink text-paper text-sm uppercase tracking-widest hover:bg-clay transition-colors mb-3"
+            <Link
+              to="/checkout"
+              className="block w-full px-6 py-3 bg-ink text-paper text-sm uppercase tracking-widest text-center hover:bg-clay transition-colors mb-3"
             >
               Passer commande
-            </button>
+            </Link>
 
             <Link
               to="/boutique"

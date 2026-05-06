@@ -8,6 +8,8 @@ import Produit from "./pages/Produit";
 import Stages from "./pages/Stages";
 import Contact from "./pages/Contact";
 import Panier from "./pages/Panier";
+import Checkout from "./pages/Checkout";
+import Confirmation from "./pages/Confirmation";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
             <Route path="/stages" element={<Stages />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/panier" element={<Panier />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/commande/:id" element={<Confirmation />} />
           </Route>
         </Routes>
       </BrowserRouter>
