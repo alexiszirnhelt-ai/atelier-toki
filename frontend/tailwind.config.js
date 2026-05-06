@@ -4,17 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette Toki
-        paper: "#F7F4EE", // blanc cassé, fond principal
-        sand: "#EDE6D6", // sable, fond alternatif
+        paper: "#F7F4EE",
+        sand: "#EDE6D6",
         ink: {
-          DEFAULT: "#1A1816", // encre noire
-          soft: "#5C564E", // encre douce
+          DEFAULT: "#1A1816",
+          soft: "#5C564E",
         },
         indigo: {
-          deep: "#3D4A5C", // indigo profond
+          deep: "#3D4A5C",
         },
-        clay: "#A8543A", // terracotta (accent rare)
+        clay: "#A8543A",
       },
       fontFamily: {
         serif: ['"Shippori Mincho"', "serif"],
@@ -23,6 +22,15 @@ export default {
       },
       letterSpacing: {
         widest: "0.25em",
+      },
+      keyframes: {
+        "slide-in": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "slide-in": "slide-in 0.3s ease-out",
       },
     },
   },

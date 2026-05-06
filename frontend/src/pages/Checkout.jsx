@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useCart } from "../context/cart-context";
 import { createOrder } from "../services/api";
+import { useToast } from "../context/toast-context";
 
 function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -60,7 +62,6 @@ function Checkout() {
     setServerError(null);
 
     try {
-      // Préparer les données pour l'API
       const orderData = {
         customer: {
           name: formData.name,
@@ -74,22 +75,24 @@ function Checkout() {
 
       const result = await createOrder(orderData);
 
-      // Vider le panier et rediriger vers la confirmation
+      toast.success("Commande confirmée !");
       clearCart();
       navigate(`/commande/${result.order.id}`);
     } catch (err) {
       console.error("Erreur création commande:", err);
 
       if (err.fields) {
-        // Remap les erreurs serveur sur les noms de champs frontend
         const mapped = {};
         if (err.fields.customerName) mapped.name = err.fields.customerName;
         if (err.fields.customerEmail) mapped.email = err.fields.customerEmail;
         if (err.fields.items) mapped.global = err.fields.items;
         setErrors(mapped);
         if (mapped.global) setServerError(mapped.global);
+        toast.error("Veuillez corriger les erreurs.");
       } else {
-        setServerError(err.message || "Une erreur est survenue. Réessayez.");
+        const message = err.message || "Une erreur est survenue. Réessayez.";
+        setServerError(message);
+        toast.error(message);
       }
     } finally {
       setSubmitting(false);
