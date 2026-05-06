@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares globaux
 app.use(
   cors({
-    origin: "http://localhost:5173", // l'origine du frontend Vite
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   }),
 );

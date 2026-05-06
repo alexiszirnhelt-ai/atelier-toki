@@ -24,7 +24,8 @@ async function main() {
         description:
           "Bol artisanal en grès, émail brillant aux reflets bleutés. Façonné à la main au tour de potier.",
         price: 35.0,
-        imageUrl: "/images/bol-gres.jpg",
+        imageUrl:
+          "https://images.unsplash.com/photo-1733459187464-29d0289750b1?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         stock: 12,
       },
       {
@@ -33,7 +34,8 @@ async function main() {
         description:
           "Vase élégant en porcelaine blanche, finition mate, formes organiques inspirées de la nature.",
         price: 78.0,
-        imageUrl: "/images/vase-porcelaine.jpg",
+        imageUrl:
+          "https://images.unsplash.com/photo-1649669637614-511a3931b11a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         stock: 5,
       },
       {
@@ -42,7 +44,8 @@ async function main() {
         description:
           "Mug en céramique rouge terracotta, motif soleil peint à la main. Contenance 30 cl.",
         price: 22.0,
-        imageUrl: "/images/mug-soleil.jpg",
+        imageUrl:
+          "https://images.unsplash.com/photo-1766747021051-b2d2e8610883?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         stock: 20,
       },
     ],
