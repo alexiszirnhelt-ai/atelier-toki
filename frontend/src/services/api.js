@@ -35,3 +35,31 @@ export async function fetchProductBySlug(slug) {
 
   return response.json();
 }
+
+/**
+ * Envoie un message de contact.
+ * @param {Object} data - { name, email, subject, message }
+ * @returns {Promise<Object>} la réponse du serveur
+ * @throws {Error} avec une propriété `fields` si erreurs de validation
+ */
+export async function sendContactMessage(data) {
+  const response = await fetch(`${API_URL}/api/contact`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    // Erreur de validation : on enrichit l'erreur avec les détails par champ
+    const error = new Error(result.error || "Erreur lors de l'envoi.");
+    error.fields = result.fields || null;
+    error.status = response.status;
+    throw error;
+  }
+
+  return result;
+}

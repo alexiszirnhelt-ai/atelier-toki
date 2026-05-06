@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { sendContactMessage } from "../services/api";
 
 function Contact() {
-  // État du formulaire : un objet avec les 4 champs
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -9,13 +9,11 @@ function Contact() {
     message: "",
   });
 
-  // État pour savoir si le formulaire a été soumis avec succès
   const [submitted, setSubmitted] = useState(false);
-
-  // État pour stocker les erreurs de validation
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState(null);
 
-  // Met à jour le state quand un champ change
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((previousData) => ({
@@ -23,7 +21,6 @@ function Contact() {
       [name]: value,
     }));
 
-    // Si on corrige une erreur, on l'efface
     if (errors[name]) {
       setErrors((previousErrors) => ({
         ...previousErrors,
@@ -32,7 +29,6 @@ function Contact() {
     }
   }
 
-  // Valide le formulaire et retourne un objet d'erreurs
   function validate() {
     const newErrors = {};
 
@@ -60,22 +56,40 @@ function Contact() {
     return newErrors;
   }
 
-  // Gère la soumission du formulaire
-  function handleSubmit(event) {
-    event.preventDefault(); // empêche le rechargement de la page
+  async function handleSubmit(event) {
+    event.preventDefault();
 
+    // Validation côté client
     const newErrors = validate();
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // TODO: envoyer au backend (branche feat/api-contact à venir)
-    console.log("Formulaire envoyé :", formData);
+    // Envoi au serveur
+    setSubmitting(true);
+    setServerError(null);
 
-    setSubmitted(true);
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    try {
+      await sendContactMessage(formData);
+      setSubmitted(true);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (err) {
+      console.error("Erreur envoi formulaire:", err);
+
+      if (err.fields) {
+        // Erreurs de validation côté serveur
+        setErrors(err.fields);
+      } else {
+        // Erreur réseau ou serveur générique
+        setServerError(
+          err.message ||
+            "Une erreur est survenue. Vérifiez votre connexion et réessayez.",
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -172,6 +186,13 @@ function Contact() {
                   Votre message
                 </h2>
 
+                {/* Erreur serveur globale */}
+                {serverError && (
+                  <div className="mb-6 p-4 bg-clay/10 border border-clay/30">
+                    <p className="text-sm text-clay">{serverError}</p>
+                  </div>
+                )}
+
                 {/* Nom */}
                 <div className="mb-6">
                   <label
@@ -186,7 +207,8 @@ function Contact() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors ${
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
                       errors.name ? "border-clay" : "border-ink/20"
                     }`}
                   />
@@ -209,7 +231,8 @@ function Contact() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors ${
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
                       errors.email ? "border-clay" : "border-ink/20"
                     }`}
                   />
@@ -232,7 +255,8 @@ function Contact() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors ${
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
                       errors.subject ? "border-clay" : "border-ink/20"
                     }`}
                   />
@@ -255,7 +279,8 @@ function Contact() {
                     rows={6}
                     value={formData.message}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors resize-none ${
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors resize-none disabled:opacity-50 ${
                       errors.message ? "border-clay" : "border-ink/20"
                     }`}
                   />
@@ -267,9 +292,10 @@ function Contact() {
                 {/* Bouton */}
                 <button
                   type="submit"
-                  className="w-full px-8 py-3 bg-ink text-paper text-sm uppercase tracking-widest hover:bg-clay transition-colors"
+                  disabled={submitting}
+                  className="w-full px-8 py-3 bg-ink text-paper text-sm uppercase tracking-widest hover:bg-clay transition-colors disabled:bg-ink-soft disabled:cursor-not-allowed"
                 >
-                  Envoyer le message
+                  {submitting ? "Envoi en cours…" : "Envoyer le message"}
                 </button>
               </form>
             )}
