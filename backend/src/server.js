@@ -4,6 +4,7 @@ import "dotenv/config";
 import productsRouter from "./routes/products.js";
 import contactRouter from "./routes/contact.js";
 import ordersRouter from "./routes/orders.js";
+import webhooksRouter from "./routes/webhooks.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +15,12 @@ app.use(
     credentials: true,
   }),
 );
+
+// IMPORTANT : la route webhook DOIT être déclarée AVANT express.json()
+// Sinon le body est parsé en JSON et la signature ne matchera plus
+app.use("/api/webhooks", webhooksRouter);
+
+// À partir de cette ligne, toutes les autres routes parsent le JSON
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {

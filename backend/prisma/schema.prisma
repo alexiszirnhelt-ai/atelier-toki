@@ -37,14 +37,15 @@ model Workshop {
 }
 
 model Order {
-  id            Int         @id @default(autoincrement())
-  customerName  String
-  customerEmail String
-  totalAmount   Float
-  status        String      @default("pending") // pending, paid, shipped, delivered
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         OrderItem[]
+  id                    Int         @id @default(autoincrement())
+  customerName          String
+  customerEmail         String
+  totalAmount           Float
+  status                String      @default("pending") // pending, paid, failed, shipped, delivered
+  stripePaymentIntentId String?     @unique
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  items                 OrderItem[]
 }
 
 model OrderItem {

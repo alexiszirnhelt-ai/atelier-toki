@@ -1,6 +1,7 @@
 import prisma from "../lib/prisma.js";
+import stripe from "../lib/stripe.js";
 
-// POST /api/orders → crée une nouvelle commande
+// POST /api/orders → crée une commande + un PaymentIntent Stripe
 export async function createOrder(req, res) {
   try {
     const { customer, items } = req.body;
@@ -30,7 +31,6 @@ export async function createOrder(req, res) {
       errors.customerEmail = "Cet email n'est pas valide.";
     }
 
-    // === VALIDATION DES ITEMS ===
     if (!Array.isArray(items) || items.length === 0) {
       errors.items = "Le panier est vide.";
     } else {
@@ -55,20 +55,18 @@ export async function createOrder(req, res) {
       });
     }
 
-    // === VÉRIFICATION DES PRODUITS EN BASE ===
+    // === VÉRIFICATION DES PRODUITS ===
     const productIds = items.map((item) => item.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
     });
 
-    // Tous les produits demandés existent-ils ?
     if (products.length !== productIds.length) {
       return res.status(400).json({
         error: "Un ou plusieurs produits sont introuvables.",
       });
     }
 
-    // Vérification des stocks et calcul du total côté serveur
     let totalAmount = 0;
     const orderItemsData = [];
 
@@ -87,54 +85,43 @@ export async function createOrder(req, res) {
       orderItemsData.push({
         productId: product.id,
         quantity: item.quantity,
-        unitPrice: product.price, // prix figé au moment de la commande
+        unitPrice: product.price,
       });
     }
 
-    // === CRÉATION DE LA COMMANDE EN TRANSACTION ===
-    const order = await prisma.$transaction(async (tx) => {
-      // 1. Créer la commande avec ses items en cascade
-      const newOrder = await tx.order.create({
-        data: {
-          customerName: customer.name.trim(),
-          customerEmail: customer.email.trim().toLowerCase(),
-          totalAmount,
-          status: "pending",
-          items: {
-            create: orderItemsData,
-          },
-        },
-        include: {
-          items: {
-            include: { product: true },
-          },
-        },
-      });
-
-      // 2. Décrémenter le stock des produits
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
-      }
-
-      return newOrder;
+    // === CRÉATION DU PAYMENT INTENT STRIPE ===
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100), // Stripe travaille en centimes !
+      currency: "eur",
+      automatic_payment_methods: { enabled: true },
+      receipt_email: customer.email.trim().toLowerCase(),
+      metadata: {
+        customerName: customer.name.trim(),
+      },
     });
 
-    res.status(201).json({
-      message: "Commande créée avec succès.",
-      order: {
-        id: order.id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-        items: order.items.map((item) => ({
-          productName: item.product.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
+    // === CRÉATION DE LA COMMANDE EN BASE ===
+    // On NE décrémente PAS le stock ici : on le fera dans le webhook quand le paiement réussit
+    const order = await prisma.order.create({
+      data: {
+        customerName: customer.name.trim(),
+        customerEmail: customer.email.trim().toLowerCase(),
+        totalAmount,
+        status: "pending",
+        stripePaymentIntentId: paymentIntent.id,
+        items: {
+          create: orderItemsData,
+        },
       },
+      include: {
+        items: { include: { product: true } },
+      },
+    });
+
+    // On renvoie le client_secret pour que le frontend puisse confirmer le paiement
+    res.status(201).json({
+      orderId: order.id,
+      clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
     console.error("Erreur createOrder:", error);
@@ -144,7 +131,7 @@ export async function createOrder(req, res) {
   }
 }
 
-// GET /api/orders/:id → détail d'une commande (pour la page de confirmation)
+// GET /api/orders/:id → détail d'une commande
 export async function getOrderById(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
@@ -156,9 +143,7 @@ export async function getOrderById(req, res) {
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        items: {
-          include: { product: true },
-        },
+        items: { include: { product: true } },
       },
     });
 
