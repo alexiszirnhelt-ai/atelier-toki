@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchProductBySlug } from "../services/api";
 import { useCart } from "../context/cart-context";
+import { useToast } from "../context/toast-context";
 
 const IMAGE_POSITIONS = {
   "bol-gres-emaille": "object-[center_80%]",
@@ -12,6 +13,7 @@ const IMAGE_POSITIONS = {
 function Produit() {
   const { slug } = useParams();
   const { addItem } = useCart();
+  const toast = useToast();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,9 @@ function Produit() {
 
   function handleAddToCart() {
     addItem(product, quantity);
-    alert(`${quantity} × ${product.name} ajouté(s) au panier !`);
+    toast.success(
+      `${quantity} × ${product.name} ajouté${quantity > 1 ? "s" : ""} au panier.`,
+    );
   }
 
   return (

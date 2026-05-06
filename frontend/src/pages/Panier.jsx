@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../context/cart-context";
+import { useToast } from "../context/toast-context";
 
 function Panier() {
   const {
@@ -10,7 +11,17 @@ function Panier() {
     totalItems,
     totalPrice,
   } = useCart();
+  const toast = useToast();
 
+  function handleRemoveItem(item) {
+    removeItem(item.id);
+    toast.info(`${item.name} retiré du panier.`);
+  }
+
+  function handleClearCart() {
+    clearCart();
+    toast.info("Panier vidé.");
+  }
   // Panier vide
   if (items.length === 0) {
     return (
@@ -114,7 +125,7 @@ function Panier() {
                     {(item.price * item.quantity).toFixed(2)} €
                   </p>
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => handleRemoveItem(item)}
                     className="text-xs uppercase tracking-widest text-ink-soft hover:text-clay transition-colors"
                   >
                     Retirer
@@ -126,7 +137,7 @@ function Panier() {
             {/* Vider le panier */}
             <div className="text-right pt-4">
               <button
-                onClick={clearCart}
+                onClick={handleClearCart}
                 className="text-xs uppercase tracking-widest text-ink-soft hover:text-clay transition-colors"
               >
                 Vider le panier

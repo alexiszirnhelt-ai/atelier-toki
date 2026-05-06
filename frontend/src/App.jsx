@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
+import { ToastProvider } from "./context/ToastContext";
+import Toaster from "./components/Toaster";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Atelier from "./pages/Atelier";
@@ -13,23 +15,26 @@ import Confirmation from "./pages/Confirmation";
 
 function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/atelier" element={<Atelier />} />
-            <Route path="/boutique" element={<Boutique />} />
-            <Route path="/boutique/:slug" element={<Produit />} />
-            <Route path="/stages" element={<Stages />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/panier" element={<Panier />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/commande/:id" element={<Confirmation />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </CartProvider>
+    <ToastProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/atelier" element={<Atelier />} />
+              <Route path="/boutique" element={<Boutique />} />
+              <Route path="/boutique/:slug" element={<Produit />} />
+              <Route path="/stages" element={<Stages />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/panier" element={<Panier />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/commande/:id" element={<Confirmation />} />
+            </Route>
+          </Routes>
+          <Toaster />
+        </BrowserRouter>
+      </CartProvider>
+    </ToastProvider>
   );
 }
 

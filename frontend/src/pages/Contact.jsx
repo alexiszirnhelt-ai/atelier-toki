@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sendContactMessage } from "../services/api";
+import { useToast } from "../context/toast-context";
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ function Contact() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState(null);
@@ -58,6 +60,27 @@ function Contact() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    try {
+      await sendContactMessage(formData);
+      setSubmitted(true);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      toast.success("Votre message a bien été envoyé.");
+    } catch (err) {
+      console.error("Erreur envoi formulaire:", err);
+
+      if (err.fields) {
+        setErrors(err.fields);
+        toast.error("Veuillez corriger les erreurs dans le formulaire.");
+      } else {
+        const message =
+          err.message ||
+          "Une erreur est survenue. Vérifiez votre connexion et réessayez.";
+        setServerError(message);
+        toast.error(message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
 
     // Validation côté client
     const newErrors = validate();
