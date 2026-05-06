@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import productsRouter from "./routes/products.js";
+import contactRouter from "./routes/contact.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares globaux
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: "http://localhost:5173",
     credentials: true,
   }),
 );
@@ -25,6 +26,7 @@ app.get("/api/health", (req, res) => {
 
 // Routes métier
 app.use("/api/products", productsRouter);
+app.use("/api/contact", contactRouter);
 
 // Gestion des routes non trouvées
 app.use((req, res) => {
