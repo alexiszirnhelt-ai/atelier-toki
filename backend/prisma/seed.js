@@ -1,0 +1,85 @@
+import "dotenv/config";
+import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+
+const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+
+async function main() {
+  console.log("🌱 Seeding database...");
+
+  // Nettoyer les données existantes (utile en dev)
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.workshop.deleteMany();
+  await prisma.contactMessage.deleteMany();
+
+  // Créer les 3 produits
+  await prisma.product.createMany({
+    data: [
+      {
+        name: "Bol en grès émaillé",
+        slug: "bol-gres-emaille",
+        description:
+          "Bol artisanal en grès, émail brillant aux reflets bleutés. Façonné à la main au tour de potier.",
+        price: 35.0,
+        imageUrl: "/images/bol-gres.jpg",
+        stock: 12,
+      },
+      {
+        name: "Vase ondulé en porcelaine",
+        slug: "vase-onduleur-porcelaine",
+        description:
+          "Vase élégant en porcelaine blanche, finition mate, formes organiques inspirées de la nature.",
+        price: 78.0,
+        imageUrl: "/images/vase-porcelaine.jpg",
+        stock: 5,
+      },
+      {
+        name: 'Mug "Soleil levant"',
+        slug: "mug-soleil-levant",
+        description:
+          "Mug en céramique rouge terracotta, motif soleil peint à la main. Contenance 30 cl.",
+        price: 22.0,
+        imageUrl: "/images/mug-soleil.jpg",
+        stock: 20,
+      },
+    ],
+  });
+
+  // Créer quelques stages
+  await prisma.workshop.createMany({
+    data: [
+      {
+        title: "Initiation au tour de potier",
+        description:
+          "Découvrez les bases du tournage en argile lors d'une demi-journée conviviale.",
+        date: new Date("2026-06-15T14:00:00"),
+        duration: 180,
+        price: 65.0,
+        capacity: 6,
+      },
+      {
+        title: "Stage week-end : du modelage à l'émaillage",
+        description:
+          "Deux jours immersifs pour réaliser votre propre pièce, du façonnage à la cuisson.",
+        date: new Date("2026-07-04T10:00:00"),
+        duration: 960,
+        price: 220.0,
+        capacity: 8,
+      },
+    ],
+  });
+
+  console.log("✅ Seeding terminé !");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
