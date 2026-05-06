@@ -63,3 +63,47 @@ export async function sendContactMessage(data) {
 
   return result;
 }
+
+/**
+ * Crée une nouvelle commande.
+ * @param {Object} data - { customer: {name, email}, items: [{productId, quantity}] }
+ * @returns {Promise<Object>} la commande créée
+ */
+export async function createOrder(data) {
+  const response = await fetch(`${API_URL}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(result.error || "Erreur lors de la commande.");
+    error.fields = result.fields || null;
+    error.status = response.status;
+    throw error;
+  }
+
+  return result;
+}
+
+/**
+ * Récupère une commande par son ID.
+ * @param {number|string} id
+ * @returns {Promise<Object>} la commande
+ */
+export async function fetchOrderById(id) {
+  const response = await fetch(`${API_URL}/api/orders/${id}`);
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("Commande introuvable.");
+    }
+    throw new Error(
+      `Erreur ${response.status} lors de la récupération de la commande.`,
+    );
+  }
+
+  return response.json();
+}
