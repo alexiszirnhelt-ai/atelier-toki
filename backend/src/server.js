@@ -1,12 +1,21 @@
 import express from "express";
+import cors from "cors";
+import "dotenv/config";
+import productsRouter from "./routes/products.js";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware pour parser le JSON dans les requêtes
+// Middlewares globaux
+app.use(
+  cors({
+    origin: "http://localhost:5173", // l'origine du frontend Vite
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
-// Route de test
+// Route de santé
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -14,7 +23,15 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Démarrage du serveur
+// Routes métier
+app.use("/api/products", productsRouter);
+
+// Gestion des routes non trouvées
+app.use((req, res) => {
+  res.status(404).json({ error: "Route non trouvée." });
+});
+
+// Démarrage
 app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });
