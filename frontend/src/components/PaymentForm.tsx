@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState } from "react";
 import {
   PaymentElement,
@@ -6,15 +7,22 @@ import {
 } from "@stripe/react-stripe-js";
 import { useToast } from "../context/toast-context";
 
-function PaymentForm({ orderId, totalPrice }) {
+interface PaymentFormProps {
+  orderId: number;
+  totalPrice: number;
+}
+
+function PaymentForm({ orderId, totalPrice }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const toast = useToast();
 
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function handleSubmit(event) {
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
@@ -29,7 +37,6 @@ function PaymentForm({ orderId, totalPrice }) {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // L'URL où Stripe redirigera après le paiement (succès ou échec)
         return_url: `${window.location.origin}/commande/${orderId}`,
       },
     });
@@ -37,7 +44,7 @@ function PaymentForm({ orderId, totalPrice }) {
     // Si on arrive ici, c'est qu'il y a eu une erreur
     // (en cas de succès, l'utilisateur est redirigé avant que ce code s'exécute)
     if (error.type === "card_error" || error.type === "validation_error") {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message ?? "Paiement refusé.");
     } else {
       setErrorMessage("Une erreur inattendue est survenue.");
     }
@@ -48,13 +55,8 @@ function PaymentForm({ orderId, totalPrice }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* Le formulaire de paiement Stripe */}
       <div className="mb-6">
-        <PaymentElement
-          options={{
-            layout: "tabs",
-          }}
-        />
+        <PaymentElement options={{ layout: "tabs" }} />
       </div>
 
       {errorMessage && (

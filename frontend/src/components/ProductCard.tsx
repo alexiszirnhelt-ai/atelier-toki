@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
+import type { Product } from "../types";
 
-const IMAGE_POSITIONS = {
+const IMAGE_POSITIONS: Record<string, string> = {
   "bol-gres-emaille": "object-[center_80%]",
   "vase-onduleur-porcelaine": "object-[center_90%]",
   "mug-soleil-levant": "object-[center_90%]",
 };
 
-function ProductCard({ product }) {
+function ProductCard({ product }: { product: Product }) {
   const position = IMAGE_POSITIONS[product.slug] ?? "object-center";
 
   return (

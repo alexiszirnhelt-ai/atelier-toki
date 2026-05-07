@@ -2,21 +2,24 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchOrderById } from "../services/api";
 import { useCart } from "../context/cart-context";
+import type { Order } from "../types";
 
 function Confirmation() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
 
-  const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { clearCart } = useCart();
 
   useEffect(() => {
+    if (!id) return;
+
     async function loadOrder() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchOrderById(id);
+        const data = await fetchOrderById(id!);
         setOrder(data);
 
         // Vider le panier maintenant qu'on est sur la page de confirmation
@@ -24,7 +27,7 @@ function Confirmation() {
         clearCart();
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Erreur inconnue.");
       } finally {
         setLoading(false);
       }

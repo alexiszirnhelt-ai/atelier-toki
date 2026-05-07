@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Elements } from "@stripe/react-stripe-js";
@@ -6,6 +7,7 @@ import { useToast } from "../context/toast-context";
 import { createOrder } from "../services/api";
 import stripePromise from "../lib/stripe";
 import PaymentForm from "../components/PaymentForm";
+import { ApiError } from "../types";
 
 function Checkout() {
   const { items, totalPrice, totalItems } = useCart();
@@ -17,13 +19,16 @@ function Checkout() {
   });
 
   // États pour les étapes
-  const [step, setStep] = useState("customer"); // 'customer' | 'payment'
+  const [step, setStep] = useState<"customer" | "payment">("customer");
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState(null);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Données reçues du backend après création de la commande
-  const [paymentData, setPaymentData] = useState(null);
+  const [paymentData, setPaymentData] = useState<{
+    orderId: number;
+    clientSecret: string;
+  } | null>(null);
   // { orderId, clientSecret }
 
   // Si le panier est vide, redirection
@@ -31,7 +36,7 @@ function Checkout() {
     return <Navigate to="/boutique" replace />;
   }
 
-  function handleChange(event) {
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setFormData((previous) => ({ ...previous, [name]: value }));
 
@@ -41,7 +46,7 @@ function Checkout() {
   }
 
   function validate() {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = "Veuillez indiquer votre nom.";
@@ -56,7 +61,9 @@ function Checkout() {
     return newErrors;
   }
 
-  async function handleCustomerSubmit(event) {
+  const handleCustomerSubmit: React.SubmitEventHandler<
+    HTMLFormElement
+  > = async (event) => {
     event.preventDefault();
 
     const newErrors = validate();
@@ -69,7 +76,7 @@ function Checkout() {
     setServerError(null);
 
     try {
-      const orderData = {
+      const result = await createOrder({
         customer: {
           name: formData.name,
           email: formData.email,
@@ -78,9 +85,7 @@ function Checkout() {
           productId: item.id,
           quantity: item.quantity,
         })),
-      };
-
-      const result = await createOrder(orderData);
+      });
 
       // On stocke les infos de paiement et on passe à l'étape 2
       setPaymentData({
@@ -91,8 +96,8 @@ function Checkout() {
     } catch (err) {
       console.error("Erreur création commande:", err);
 
-      if (err.fields) {
-        const mapped = {};
+      if (err instanceof ApiError && err.fields) {
+        const mapped: Record<string, string> = {};
         if (err.fields.customerName) mapped.name = err.fields.customerName;
         if (err.fields.customerEmail) mapped.email = err.fields.customerEmail;
         if (err.fields.items) mapped.global = err.fields.items;
@@ -100,7 +105,10 @@ function Checkout() {
         if (mapped.global) setServerError(mapped.global);
         toast.error("Veuillez corriger les erreurs.");
       } else {
-        const message = err.message || "Une erreur est survenue. Réessayez.";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue. Réessayez.";
         setServerError(message);
         toast.error(message);
       }
@@ -114,7 +122,7 @@ function Checkout() {
     ? {
         clientSecret: paymentData.clientSecret,
         appearance: {
-          theme: "flat",
+          theme: "flat" as const,
           variables: {
             colorPrimary: "#1A1816",
             colorBackground: "#F7F4EE",
@@ -127,7 +135,7 @@ function Checkout() {
           },
         },
       }
-    : null;
+    : undefined;
 
   return (
     <>

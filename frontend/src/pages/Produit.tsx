@@ -3,34 +3,37 @@ import { useParams, Link } from "react-router-dom";
 import { fetchProductBySlug } from "../services/api";
 import { useCart } from "../context/cart-context";
 import { useToast } from "../context/toast-context";
+import type { Product } from "../types";
 
-const IMAGE_POSITIONS = {
+const IMAGE_POSITIONS: Record<string, string> = {
   "bol-gres-emaille": "object-[center_80%]",
   "vase-onduleur-porcelaine": "object-[center_90%]",
   "mug-soleil-levant": "object-[center_90%]",
 };
 
 function Produit() {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
   const { addItem } = useCart();
   const toast = useToast();
 
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
+    if (!slug) return;
+
     async function loadProduct() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchProductBySlug(slug);
+        const data = await fetchProductBySlug(slug!);
         setProduct(data);
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Erreur inconnue.");
       } finally {
         setLoading(false);
       }
@@ -81,13 +84,13 @@ function Produit() {
   }
 
   function increment() {
-    setQuantity((q) => Math.min(product.stock, q + 1));
+    setQuantity((q) => Math.min(product!.stock, q + 1));
   }
 
   function handleAddToCart() {
-    addItem(product, quantity);
+    addItem(product!, quantity);
     toast.success(
-      `${quantity} × ${product.name} ajouté${quantity > 1 ? "s" : ""} au panier.`,
+      `${quantity} × ${product!.name} ajouté${quantity > 1 ? "s" : ""} au panier.`,
     );
   }
 

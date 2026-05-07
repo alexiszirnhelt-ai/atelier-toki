@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { fetchProducts } from "../services/api";
 import ProductCard from "../components/ProductCard";
+import type { Product } from "../types";
 
 function Boutique() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProducts() {
@@ -15,7 +16,7 @@ function Boutique() {
         setProducts(data);
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Erreur inconnue.");
       } finally {
         setLoading(false);
       }

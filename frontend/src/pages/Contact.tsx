@@ -1,6 +1,8 @@
+import * as React from "react";
 import { useState } from "react";
 import { sendContactMessage } from "../services/api";
 import { useToast } from "../context/toast-context";
+import { ApiError } from "../types";
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -13,10 +15,12 @@ function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState(null);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  function handleChange(event) {
+  function handleChange(
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
     const { name, value } = event.target;
     setFormData((previousData) => ({
       ...previousData,
@@ -32,7 +36,7 @@ function Contact() {
   }
 
   function validate() {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = "Veuillez indiquer votre nom.";
@@ -58,8 +62,20 @@ function Contact() {
     return newErrors;
   }
 
-  async function handleSubmit(event) {
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
     event.preventDefault();
+
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    setServerError(null);
+
     try {
       await sendContactMessage(formData);
       setSubmitted(true);
@@ -68,47 +84,16 @@ function Contact() {
     } catch (err) {
       console.error("Erreur envoi formulaire:", err);
 
-      if (err.fields) {
+      if (err instanceof ApiError && err.fields) {
         setErrors(err.fields);
         toast.error("Veuillez corriger les erreurs dans le formulaire.");
       } else {
         const message =
-          err.message ||
-          "Une erreur est survenue. Vérifiez votre connexion et réessayez.";
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue. Vérifiez votre connexion et réessayez.";
         setServerError(message);
         toast.error(message);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-
-    // Validation côté client
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Envoi au serveur
-    setSubmitting(true);
-    setServerError(null);
-
-    try {
-      await sendContactMessage(formData);
-      setSubmitted(true);
-      setFormData({ name: "", email: "", subject: "", message: "" });
-    } catch (err) {
-      console.error("Erreur envoi formulaire:", err);
-
-      if (err.fields) {
-        // Erreurs de validation côté serveur
-        setErrors(err.fields);
-      } else {
-        // Erreur réseau ou serveur générique
-        setServerError(
-          err.message ||
-            "Une erreur est survenue. Vérifiez votre connexion et réessayez.",
-        );
       }
     } finally {
       setSubmitting(false);

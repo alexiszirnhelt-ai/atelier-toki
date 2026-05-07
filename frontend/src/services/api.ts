@@ -1,14 +1,19 @@
+import {
+  ApiError,
+  type ContactRequest,
+  type Order,
+  type OrderCreateResponse,
+  type OrderRequest,
+  type Product,
+} from "../types";
+
 // Si VITE_API_URL est défini (ex: en prod), on l'utilise.
 // Sinon on dérive de l'hôte courant — utile pour tester depuis un mobile sur le LAN.
 const API_URL =
   import.meta.env.VITE_API_URL ||
   `${window.location.protocol}//${window.location.hostname}:3000`;
 
-/**
- * Récupère tous les produits.
- * @returns {Promise<Array>} liste de produits
- */
-export async function fetchProducts() {
+export async function fetchProducts(): Promise<Product[]> {
   const response = await fetch(`${API_URL}/api/products`);
 
   if (!response.ok) {
@@ -20,12 +25,7 @@ export async function fetchProducts() {
   return response.json();
 }
 
-/**
- * Récupère un produit par son slug.
- * @param {string} slug
- * @returns {Promise<Object>} le produit
- */
-export async function fetchProductBySlug(slug) {
+export async function fetchProductBySlug(slug: string): Promise<Product> {
   const response = await fetch(`${API_URL}/api/products/${slug}`);
 
   if (!response.ok) {
@@ -40,40 +40,30 @@ export async function fetchProductBySlug(slug) {
   return response.json();
 }
 
-/**
- * Envoie un message de contact.
- * @param {Object} data - { name, email, subject, message }
- * @returns {Promise<Object>} la réponse du serveur
- * @throws {Error} avec une propriété `fields` si erreurs de validation
- */
-export async function sendContactMessage(data) {
+export async function sendContactMessage(
+  data: ContactRequest,
+): Promise<{ message: string; id: number }> {
   const response = await fetch(`${API_URL}/api/contact`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    // Erreur de validation : on enrichit l'erreur avec les détails par champ
-    const error = new Error(result.error || "Erreur lors de l'envoi.");
-    error.fields = result.fields || null;
-    error.status = response.status;
-    throw error;
+    throw new ApiError(result.error || "Erreur lors de l'envoi.", {
+      fields: result.fields ?? null,
+      status: response.status,
+    });
   }
 
   return result;
 }
 
-/**
- * Crée une nouvelle commande.
- * @param {Object} data - { customer: {name, email}, items: [{productId, quantity}] }
- * @returns {Promise<Object>} la commande créée
- */
-export async function createOrder(data) {
+export async function createOrder(
+  data: OrderRequest,
+): Promise<OrderCreateResponse> {
   const response = await fetch(`${API_URL}/api/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -83,21 +73,16 @@ export async function createOrder(data) {
   const result = await response.json();
 
   if (!response.ok) {
-    const error = new Error(result.error || "Erreur lors de la commande.");
-    error.fields = result.fields || null;
-    error.status = response.status;
-    throw error;
+    throw new ApiError(result.error || "Erreur lors de la commande.", {
+      fields: result.fields ?? null,
+      status: response.status,
+    });
   }
 
   return result;
 }
 
-/**
- * Récupère une commande par son ID.
- * @param {number|string} id
- * @returns {Promise<Object>} la commande
- */
-export async function fetchOrderById(id) {
+export async function fetchOrderById(id: number | string): Promise<Order> {
   const response = await fetch(`${API_URL}/api/orders/${id}`);
 
   if (!response.ok) {
