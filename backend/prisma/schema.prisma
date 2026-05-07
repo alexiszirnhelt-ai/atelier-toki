@@ -8,14 +8,14 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Product {
   id          Int         @id @default(autoincrement())
   name        String
   slug        String      @unique
-  description String
+  description String      @db.Text
   price       Float
   imageUrl    String
   stock       Int         @default(0)
@@ -27,7 +27,7 @@ model Product {
 model Workshop {
   id          Int      @id @default(autoincrement())
   title       String
-  description String
+  description String   @db.Text
   date        DateTime
   duration    Int      // durée en minutes
   price       Float
@@ -63,6 +63,6 @@ model ContactMessage {
   name      String
   email     String
   subject   String
-  message   String
+  message   String   @db.Text
   createdAt DateTime @default(now())
 }
