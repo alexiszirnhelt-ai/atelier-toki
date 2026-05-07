@@ -16,7 +16,7 @@ function Header() {
 
   // Fermer le menu avec la touche Échap
   useEffect(() => {
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMenuOpen(false);
       }

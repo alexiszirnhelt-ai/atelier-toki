@@ -1,22 +1,19 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { CartContext } from "./cart-context";
+import type { CartItem, Product } from "../types";
 
-// Clé utilisée pour le localStorage
 const STORAGE_KEY = "atelier-toki-cart";
 
-// 2. Le Provider : englobe l'app et fournit le state
-export function CartProvider({ children }) {
-  // On initialise depuis le localStorage, ou vide si rien
-  const [items, setItems] = useState(() => {
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      return stored ? (JSON.parse(stored) as CartItem[]) : [];
     } catch {
       return [];
     }
   });
 
-  // À chaque modification du panier, on synchronise le localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -25,7 +22,7 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  const addItem = useCallback((product, quantity = 1) => {
+  const addItem = useCallback((product: Product, quantity = 1) => {
     setItems((previousItems) => {
       const existing = previousItems.find((item) => item.id === product.id);
 
@@ -55,14 +52,14 @@ export function CartProvider({ children }) {
     });
   }, []);
 
-  const removeItem = useCallback((productId) => {
+  const removeItem = useCallback((productId: number) => {
     setItems((previousItems) =>
       previousItems.filter((item) => item.id !== productId),
     );
   }, []);
 
   const updateQuantity = useCallback(
-    (productId, newQuantity) => {
+    (productId: number, newQuantity: number) => {
       if (newQuantity <= 0) {
         removeItem(productId);
         return;

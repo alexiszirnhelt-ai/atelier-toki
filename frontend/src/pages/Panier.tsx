@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../context/cart-context";
 import { useToast } from "../context/toast-context";
+import type { CartItem } from "../types";
 
 function Panier() {
   const {
@@ -13,7 +14,7 @@ function Panier() {
   } = useCart();
   const toast = useToast();
 
-  function handleRemoveItem(item) {
+  function handleRemoveItem(item: CartItem) {
     removeItem(item.id);
     toast.info(`${item.name} retiré du panier.`);
   }

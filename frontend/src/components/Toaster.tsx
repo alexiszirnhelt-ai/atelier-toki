@@ -1,13 +1,19 @@
 import { useToast } from "../context/toast-context";
+import type { Toast as ToastType, ToastType as ToastKind } from "../types";
 
-function Toast({ toast, onClose }) {
-  const styles = {
+interface ToastProps {
+  toast: ToastType;
+  onClose: (id: number) => void;
+}
+
+function Toast({ toast, onClose }: ToastProps) {
+  const styles: Record<ToastKind, string> = {
     success: "bg-ink text-paper border-ink",
     error: "bg-clay text-paper border-clay",
     info: "bg-paper text-ink border-ink/20",
   };
 
-  const icons = {
+  const icons: Record<ToastKind, string> = {
     success: "✓",
     error: "×",
     info: "·",

@@ -1,27 +1,24 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { ToastContext } from "./toast-context";
+import type { Toast, ToastOptions } from "../types";
 
-// Durée d'affichage par défaut en ms
 const DEFAULT_DURATION = 4000;
 
-export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Retire un toast par son id
-  const removeToast = useCallback((id) => {
+  const removeToast = useCallback((id: number) => {
     setToasts((previous) => previous.filter((toast) => toast.id !== id));
   }, []);
 
-  // Ajoute un toast et programme sa disparition
   const showToast = useCallback(
-    (message, options = {}) => {
+    (message: string, options: ToastOptions = {}) => {
       const id = Date.now() + Math.random();
-      const type = options.type || "info"; // 'success' | 'error' | 'info'
+      const type = options.type ?? "info";
       const duration = options.duration ?? DEFAULT_DURATION;
 
       setToasts((previous) => [...previous, { id, message, type }]);
 
-      // Programmation de la disparition automatique
       if (duration > 0) {
         setTimeout(() => {
           removeToast(id);
@@ -33,16 +30,15 @@ export function ToastProvider({ children }) {
     [removeToast],
   );
 
-  // Helpers pratiques pour les types courants
   const value = {
     showToast,
     removeToast,
     toasts,
-    success: (message, options) =>
+    success: (message: string, options?: ToastOptions) =>
       showToast(message, { ...options, type: "success" }),
-    error: (message, options) =>
+    error: (message: string, options?: ToastOptions) =>
       showToast(message, { ...options, type: "error" }),
-    info: (message, options) =>
+    info: (message: string, options?: ToastOptions) =>
       showToast(message, { ...options, type: "info" }),
   };
 
