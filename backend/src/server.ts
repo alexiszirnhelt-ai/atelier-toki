@@ -9,18 +9,24 @@ import webhooksRouter from "./routes/webhooks.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Accepte localhost et toute IP du réseau local (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-// pour permettre le test depuis un mobile sur le même Wi-Fi en dev.
-const LOCAL_ORIGIN_REGEX =
-  /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
+// Configuration CORS — origines autorisées via variable d'environnement
+// Format : CORS_ORIGIN=http://localhost:5173,https://atelier-toki.vercel.app
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Pas d'origin = requête same-origin, curl, ou Postman → on laisse passer
+      // Autoriser les requêtes sans origine (ex: Postman, curl, mobile apps)
       if (!origin) return callback(null, true);
-      if (LOCAL_ORIGIN_REGEX.test(origin)) return callback(null, true);
-      callback(new Error(`Origine non autorisée : ${origin}`));
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error(`CORS: origine non autorisée (${origin})`));
     },
     credentials: true,
   }),
