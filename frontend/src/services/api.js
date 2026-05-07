@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL;
+// Si VITE_API_URL est défini (ex: en prod), on l'utilise.
+// Sinon on dérive de l'hôte courant — utile pour tester depuis un mobile sur le LAN.
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  `${window.location.protocol}//${window.location.hostname}:3000`;
 
 /**
  * Récupère tous les produits.
