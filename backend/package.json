@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "build": "prisma generate && tsc",
+    "postinstall": "prisma generate",
+    "start": "node dist/server.js",
+    "deploy:migrate": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
