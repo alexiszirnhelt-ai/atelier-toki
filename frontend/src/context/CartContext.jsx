@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { CartContext } from "./cart-context";
 
 // Clé utilisée pour le localStorage
@@ -25,14 +25,11 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  // Ajouter un produit au panier
-  function addItem(product, quantity = 1) {
+  const addItem = useCallback((product, quantity = 1) => {
     setItems((previousItems) => {
-      // Le produit est-il déjà dans le panier ?
       const existing = previousItems.find((item) => item.id === product.id);
 
       if (existing) {
-        // Oui : on incrémente la quantité (en respectant le stock)
         return previousItems.map((item) =>
           item.id === product.id
             ? {
@@ -43,7 +40,6 @@ export function CartProvider({ children }) {
         );
       }
 
-      // Non : on ajoute un nouvel item
       return [
         ...previousItems,
         {
@@ -57,52 +53,61 @@ export function CartProvider({ children }) {
         },
       ];
     });
-  }
+  }, []);
 
-  // Retirer complètement un produit
-  function removeItem(productId) {
+  const removeItem = useCallback((productId) => {
     setItems((previousItems) =>
       previousItems.filter((item) => item.id !== productId),
     );
-  }
+  }, []);
 
-  // Modifier la quantité d'un produit
-  function updateQuantity(productId, newQuantity) {
-    if (newQuantity <= 0) {
-      removeItem(productId);
-      return;
-    }
-    setItems((previousItems) =>
-      previousItems.map((item) =>
-        item.id === productId
-          ? { ...item, quantity: Math.min(newQuantity, item.stock) }
-          : item,
-      ),
-    );
-  }
+  const updateQuantity = useCallback(
+    (productId, newQuantity) => {
+      if (newQuantity <= 0) {
+        removeItem(productId);
+        return;
+      }
+      setItems((previousItems) =>
+        previousItems.map((item) =>
+          item.id === productId
+            ? { ...item, quantity: Math.min(newQuantity, item.stock) }
+            : item,
+        ),
+      );
+    },
+    [removeItem],
+  );
 
-  // Vider le panier
-  function clearCart() {
+  const clearCart = useCallback(() => {
     setItems([]);
-  }
+  }, []);
 
-  // Valeurs dérivées (calculées depuis items)
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
 
-  // Tout ce qu'on expose aux composants enfants
-  const value = {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    totalItems,
-    totalPrice,
-  };
+  const value = useMemo(
+    () => ({
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      totalItems,
+      totalPrice,
+    }),
+    [
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      totalItems,
+      totalPrice,
+    ],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

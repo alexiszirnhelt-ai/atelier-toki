@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchOrderById } from "../services/api";
+import { useCart } from "../context/cart-context";
 
 function Confirmation() {
   const { id } = useParams();
@@ -8,6 +9,7 @@ function Confirmation() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { clearCart } = useCart();
 
   useEffect(() => {
     async function loadOrder() {
@@ -16,6 +18,10 @@ function Confirmation() {
         setError(null);
         const data = await fetchOrderById(id);
         setOrder(data);
+
+        // Vider le panier maintenant qu'on est sur la page de confirmation
+        // (le paiement a été traité par Stripe avant la redirection)
+        clearCart();
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -25,7 +31,7 @@ function Confirmation() {
     }
 
     loadOrder();
-  }, [id]);
+  }, [id, clearCart]);
 
   if (loading) {
     return (

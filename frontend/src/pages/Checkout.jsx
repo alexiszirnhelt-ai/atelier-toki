@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "../context/cart-context";
-import { createOrder } from "../services/api";
 import { useToast } from "../context/toast-context";
+import { createOrder } from "../services/api";
+import stripePromise from "../lib/stripe";
+import PaymentForm from "../components/PaymentForm";
 
 function Checkout() {
-  const { items, totalPrice, totalItems, clearCart } = useCart();
-  const navigate = useNavigate();
+  const { items, totalPrice, totalItems } = useCart();
   const toast = useToast();
 
   const [formData, setFormData] = useState({
@@ -14,12 +16,17 @@ function Checkout() {
     email: "",
   });
 
+  // États pour les étapes
+  const [step, setStep] = useState("customer"); // 'customer' | 'payment'
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState(null);
 
-  // Si le panier est vide, on redirige vers la boutique
-  // (à mettre AVANT toute autre logique)
+  // Données reçues du backend après création de la commande
+  const [paymentData, setPaymentData] = useState(null);
+  // { orderId, clientSecret }
+
+  // Si le panier est vide, redirection
   if (items.length === 0) {
     return <Navigate to="/boutique" replace />;
   }
@@ -49,7 +56,7 @@ function Checkout() {
     return newErrors;
   }
 
-  async function handleSubmit(event) {
+  async function handleCustomerSubmit(event) {
     event.preventDefault();
 
     const newErrors = validate();
@@ -75,9 +82,12 @@ function Checkout() {
 
       const result = await createOrder(orderData);
 
-      toast.success("Commande confirmée !");
-      clearCart();
-      navigate(`/commande/${result.order.id}`);
+      // On stocke les infos de paiement et on passe à l'étape 2
+      setPaymentData({
+        orderId: result.orderId,
+        clientSecret: result.clientSecret,
+      });
+      setStep("payment");
     } catch (err) {
       console.error("Erreur création commande:", err);
 
@@ -99,6 +109,26 @@ function Checkout() {
     }
   }
 
+  // Configuration de l'apparence Stripe Elements (couleurs cohérentes avec notre design)
+  const stripeOptions = paymentData
+    ? {
+        clientSecret: paymentData.clientSecret,
+        appearance: {
+          theme: "flat",
+          variables: {
+            colorPrimary: "#1A1816",
+            colorBackground: "#F7F4EE",
+            colorText: "#1A1816",
+            colorDanger: "#A8543A",
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSizeBase: "14px",
+            spacingUnit: "4px",
+            borderRadius: "0px",
+          },
+        },
+      }
+    : null;
+
   return (
     <>
       {/* HERO */}
@@ -114,94 +144,141 @@ function Checkout() {
             Finaliser la commande
           </span>
           <h1 className="font-serif text-4xl md:text-5xl text-ink mt-4">
-            Vos coordonnées
+            {step === "customer" ? "Vos coordonnées" : "Paiement"}
           </h1>
+
+          {/* Indicateur d'étape */}
+          <div className="flex items-center gap-3 mt-6 text-xs uppercase tracking-widest">
+            <span
+              className={
+                step === "customer" ? "text-ink font-medium" : "text-ink-soft"
+              }
+            >
+              1. Coordonnées
+            </span>
+            <span className="text-ink-soft">/</span>
+            <span
+              className={
+                step === "payment" ? "text-ink font-medium" : "text-ink-soft"
+              }
+            >
+              2. Paiement
+            </span>
+          </div>
         </div>
       </section>
 
       {/* FORMULAIRE + RÉCAP */}
       <section className="bg-sand py-16 px-6">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-3 gap-8">
-          {/* FORMULAIRE */}
+          {/* COLONNE GAUCHE : formulaire selon l'étape */}
           <div className="lg:col-span-2 bg-paper p-8 md:p-12">
-            <form onSubmit={handleSubmit} noValidate>
-              {serverError && (
-                <div className="mb-6 p-4 bg-clay/10 border border-clay/30">
-                  <p className="text-sm text-clay">{serverError}</p>
+            {step === "customer" && (
+              <form onSubmit={handleCustomerSubmit} noValidate>
+                {serverError && (
+                  <div className="mb-6 p-4 bg-clay/10 border border-clay/30">
+                    <p className="text-sm text-clay">{serverError}</p>
+                  </div>
+                )}
+
+                <h2 className="font-serif text-2xl text-ink mb-2">
+                  Pour la livraison
+                </h2>
+                <p className="text-sm text-ink-soft mb-8">
+                  Une confirmation vous sera envoyée par email. Site fictif :
+                  aucune commande réelle ne sera traitée.
+                </p>
+
+                <div className="mb-6">
+                  <label
+                    htmlFor="name"
+                    className="block text-xs uppercase tracking-widest text-ink-soft mb-2"
+                  >
+                    Nom complet
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
+                      errors.name ? "border-clay" : "border-ink/20"
+                    }`}
+                  />
+                  {errors.name && (
+                    <p className="text-clay text-sm mt-2">{errors.name}</p>
+                  )}
                 </div>
-              )}
 
-              <h2 className="font-serif text-2xl text-ink mb-2">
-                Pour la livraison
-              </h2>
-              <p className="text-sm text-ink-soft mb-8">
-                Une confirmation vous sera envoyée par email. Site fictif :
-                aucune commande réelle ne sera traitée.
-              </p>
+                <div className="mb-8">
+                  <label
+                    htmlFor="email"
+                    className="block text-xs uppercase tracking-widest text-ink-soft mb-2"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={submitting}
+                    className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
+                      errors.email ? "border-clay" : "border-ink/20"
+                    }`}
+                  />
+                  {errors.email && (
+                    <p className="text-clay text-sm mt-2">{errors.email}</p>
+                  )}
+                </div>
 
-              {/* Nom */}
-              <div className="mb-6">
-                <label
-                  htmlFor="name"
-                  className="block text-xs uppercase tracking-widest text-ink-soft mb-2"
-                >
-                  Nom complet
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
+                <button
+                  type="submit"
                   disabled={submitting}
-                  className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
-                    errors.name ? "border-clay" : "border-ink/20"
-                  }`}
-                />
-                {errors.name && (
-                  <p className="text-clay text-sm mt-2">{errors.name}</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="mb-8">
-                <label
-                  htmlFor="email"
-                  className="block text-xs uppercase tracking-widest text-ink-soft mb-2"
+                  className="w-full px-8 py-4 bg-ink text-paper text-sm uppercase tracking-widest hover:bg-clay transition-colors disabled:bg-ink-soft disabled:cursor-not-allowed"
                 >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={`w-full px-4 py-3 bg-paper border text-ink focus:outline-none focus:border-ink transition-colors disabled:opacity-50 ${
-                    errors.email ? "border-clay" : "border-ink/20"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="text-clay text-sm mt-2">{errors.email}</p>
-                )}
-              </div>
+                  {submitting
+                    ? "Préparation du paiement…"
+                    : "Continuer vers le paiement"}
+                </button>
+              </form>
+            )}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full px-8 py-4 bg-ink text-paper text-sm uppercase tracking-widest hover:bg-clay transition-colors disabled:bg-ink-soft disabled:cursor-not-allowed"
-              >
-                {submitting
-                  ? "Création de la commande…"
-                  : `Confirmer la commande — ${totalPrice.toFixed(2)} €`}
-              </button>
+            {step === "payment" && paymentData && (
+              <>
+                <button
+                  onClick={() => {
+                    setStep("customer");
+                    setPaymentData(null);
+                  }}
+                  className="text-xs uppercase tracking-widest text-ink-soft hover:text-ink transition-colors mb-6"
+                >
+                  ← Modifier mes coordonnées
+                </button>
 
-              <p className="text-xs text-ink-soft text-center mt-6 leading-relaxed">
-                En confirmant, vous acceptez les conditions de vente fictives de
-                ce site d'apprentissage.
-              </p>
-            </form>
+                <h2 className="font-serif text-2xl text-ink mb-2">
+                  Moyen de paiement
+                </h2>
+                <p className="text-sm text-ink-soft mb-8">
+                  Bonjour{" "}
+                  <span className="text-ink font-medium">
+                    {formData.name.split(" ")[0]}
+                  </span>
+                  , saisissez votre carte ci-dessous pour finaliser votre
+                  commande.
+                </p>
+
+                <Elements stripe={stripePromise} options={stripeOptions}>
+                  <PaymentForm
+                    orderId={paymentData.orderId}
+                    totalPrice={totalPrice}
+                  />
+                </Elements>
+              </>
+            )}
           </div>
 
           {/* RÉCAPITULATIF */}
