@@ -1,12 +1,13 @@
+import type { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 
 // POST /api/contact → enregistre un message de contact
-export async function createContactMessage(req, res) {
+export async function createContactMessage(req: Request, res: Response) {
   try {
-    const { name, email, subject, message } = req.body;
+    const { name, email, subject, message } = req.body as any;
 
     // Validation côté serveur
-    const errors = {};
+    const errors: Record<string, string> = {};
 
     if (!name || typeof name !== "string" || !name.trim()) {
       errors.name = "Le nom est requis.";

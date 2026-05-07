@@ -1,13 +1,14 @@
+import type { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import stripe from "../lib/stripe.js";
 
 // POST /api/orders → crée une commande + un PaymentIntent Stripe
-export async function createOrder(req, res) {
+export async function createOrder(req: Request, res: Response) {
   try {
-    const { customer, items } = req.body;
+    const { customer, items } = req.body as any;
 
     // === VALIDATION DES DONNÉES CLIENT ===
-    const errors = {};
+    const errors: Record<string, string> = {};
 
     if (!customer || typeof customer !== "object") {
       return res.status(400).json({ error: "Données client manquantes." });
@@ -132,9 +133,9 @@ export async function createOrder(req, res) {
 }
 
 // GET /api/orders/:id → détail d'une commande
-export async function getOrderById(req, res) {
+export async function getOrderById(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id as string, 10);
 
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide." });
