@@ -14,8 +14,15 @@ function ProductCard({ product }: { product: Product }) {
     <Link to={`/boutique/${product.slug}`} className="group block">
       <div className="aspect-square overflow-hidden mb-4 bg-sand">
         <img
-          src={product.imageUrl}
+          src={`${product.imageUrl.split("?")[0]}?auto=format&fit=crop&w=600&q=80`}
+          srcSet={`
+            ${product.imageUrl.split("?")[0]}?auto=format&fit=crop&w=400&q=80 400w,
+            ${product.imageUrl.split("?")[0]}?auto=format&fit=crop&w=600&q=80 600w,
+            ${product.imageUrl.split("?")[0]}?auto=format&fit=crop&w=800&q=80 800w
+          `}
+          sizes="(max-width: 768px) 100vw, 33vw"
           alt={product.name}
+          loading="lazy"
           className={`w-full h-full object-cover ${position} group-hover:scale-105 transition-transform duration-700`}
         />
       </div>
