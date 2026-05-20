@@ -6,8 +6,15 @@ function Home() {
       {/* HERO SECTION */}
       <section className="relative h-[85vh] min-h-[600px] w-full overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=2000&q=80"
+          src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1200&q=75"
+          srcSet="
+    https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=800&q=75 800w,
+    https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1200&q=75 1200w,
+    https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1600&q=75 1600w
+  "
+          sizes="100vw"
           alt="Mains façonnant de l'argile sur un tour de potier"
+          fetchPriority="high"
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Voile sombre pour lisibilité */}
